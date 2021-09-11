@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
+  <coverage processUncoveredFiles="true">
+    <include>
+      <directory suffix=".php">src</directory>
+    </include>
+    <exclude>
+      <directory suffix=".php">tests</directory>
+    </exclude>
+  </coverage>
+  <testsuites>
+    <testsuite name="Object_Freezer">
+      <file>tests/sqlparts/Limit_Test.php</file>
+      <file>tests/sqlparts/OrderPiece_Test.php</file>
+      <file>tests/sqlparts/OrderBy_Test.php</file>
+      <file>tests/sqlparts/Piece_Test.php</file>
+      <file>tests/sqlparts/Where_Test.php</file>
+      <file>tests/sqlparts/GroupBy_Test.php</file>
+      <file>tests/sqlparts/Having_Test.php</file>
+      <file>tests/sqlparts/Select_Test.php</file>
+      <file>tests/query/Query_Test.php</file>
+    </testsuite>
+  </testsuites>
+</phpunit>

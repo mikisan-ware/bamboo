@@ -1,0 +1,18 @@
+{
+    "name": "mikisan/bamboo",
+    "type": "library",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Katsuhiko Miki",
+            "email": "strike-force@outlook.jp"
+        }
+    ],
+    "require": {
+        "mikisan/exceptions":           "^1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit":              "^9.0",
+        "mikisan/autoload":             "^1.0"
+    }
+}
