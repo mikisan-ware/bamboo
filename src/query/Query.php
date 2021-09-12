@@ -49,7 +49,8 @@ class Query
         switch(true)
         {
             case $key === "type":
-                return $this->type;
+            case $key === "alias":
+                return $this->{$key};
         }
         
         throw new BambooException("Queryでは {$key} は取得できません。");
@@ -77,27 +78,27 @@ class Query
         return $this;
     }
     
-    public function innerJoin(string $join): Query
+    public function innerJoin($join): Query
     {
         return $this->join($join, Join::INNER);
     }
     
-    public function leftJoin(string $join): Query
+    public function leftJoin($join): Query
     {
         return $this->join($join, Join::LEFT);
     }
     
-    public function rightJoin(string $join): Query
+    public function rightJoin($join): Query
     {
         return $this->join($join, Join::RIGHT);
     }
     
-    public function fullJoin(string $join): Query
+    public function fullJoin($join): Query
     {
         return $this->join($join, Join::FULL);
     }
     
-    public function crossJoin(string $join): Query
+    public function crossJoin($join): Query
     {
         return $this->join($join, Join::CROSS);
     }

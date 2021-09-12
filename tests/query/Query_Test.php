@@ -265,6 +265,26 @@ EOL;
         $this->assertSame($expect, $qry->getQuery());
     }
     
+    public function test_join_by_query()
+    {
+        $table  = Query::build()->from("test2")->where(["test", 1])->select("test1, test2, test3")->alias("B");
+        $qry    = Query::build()->from("test1|:A")->leftJoin($table)->on("A.test1", "B.test2");
+        $expect = <<< EOL
+FROM
+    `test1` AS A
+LEFT OUTER JOIN
+    (
+        SELECT
+            `test1`, `test2`, `test3`
+        FROM
+            `test2`
+        WHERE `test` = :test_0
+    ) AS B
+ON `A`.`test1` = `B`.`test2`
+EOL;
+        $this->assertSame($expect, $qry->getQuery());
+    }
+    
     public function test_where()
     {
         $qry  = Query::build()->where(["A.test1", 1]);

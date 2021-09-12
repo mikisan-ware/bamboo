@@ -81,7 +81,7 @@ echo <<< EOL
             SELECT @seq_no := 0 AS seq_no
             UNION
             SELECT @seq_no := @seq_no + 1 AS seq_no FROM information_schema.COLUMNS
-            LIMIT {$diff}
+            LIMIT [$diff]
         ) AS tmp
     ) AS A
     LEFT JOIN
@@ -90,7 +90,7 @@ echo <<< EOL
                 DATE_FORMAT(`date_confirm`, [:date_format]) AS date,
                 COUNT(`date_confirm`) as count
         FROM `feijoa_jp2`.`covid19_cities`
-        WHERE type = {$type}
+        WHERE type = [$type]
         GROUP BY date
     ) AS B
     USING(date)

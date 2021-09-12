@@ -71,9 +71,14 @@ class Join
     
     private function setJoin($join) : void
     {
+        if($join instanceof Query)
+        {
+            $this->join     = $join;
+            return;
+        }
         if(is_string($join))
         {
-            $parts  = DBUTIL::separateAlias($join);
+            $parts          = DBUTIL::separateAlias($join);
             $this->join     = $parts[0];
             $this->alias    = $parts[1] ?? null;
             return;
@@ -118,7 +123,10 @@ class Join
     
     private function get_join_table(): string
     {
-        return DBUTIL::wrapID($this->join) . " AS " . DBUTIL::strip($this->alias);
+        return ($this->join instanceof Query)
+                    ? $this->join->toSQL(1)
+                    : DBUTIL::wrapID($this->join) . " AS " . DBUTIL::strip($this->alias)
+                    ;
     }
     
     private function get_connect(): string
