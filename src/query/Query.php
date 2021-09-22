@@ -21,6 +21,7 @@ use \mikisan\core\exception\BambooException;
 
 class Query
 {
+    
     const   BUILD = "BUILD", STRING = "STRING";
     
     const   SELECT = "SELECT", INSERT = "INSERT", 
@@ -44,7 +45,7 @@ class Query
     private $insert     = null;
     private $source     = null;
     private $into       = null;
-
+    
     public function __construct() {}
     
     public static function text(string $query): Query
@@ -70,10 +71,16 @@ class Query
             case $key === "mode":
             case $key === "type":
             case $key === "alias":
+                
                 return $this->{$key};
         }
         
         throw new BambooException("Queryでは {$key} は取得できません。");
+    }
+    
+    public function reset(): Query
+    {
+        $this->counter  = 0;
     }
     
     public function table(string $table): Query

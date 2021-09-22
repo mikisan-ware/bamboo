@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace mikisan\core\basis\bamboo;
 
+use \mikisan\core\basis\bamboo\Indexer;
 use \mikisan\core\exception\BambooException;
 
 class Having
@@ -97,10 +98,10 @@ class Having
         foreach($this->having as $piece)
         {
             $array[] = (is_object($piece) && get_class($piece) === "mikisan\\core\\basis\\bamboo\Having")
-                            ? "({$piece->toSql($idx)})"
-                            : $piece->toSql($idx)
+                            ? "({$piece->toSql(Indexer::get())})"
+                            : $piece->toSql(Indexer::get())
                             ;
-            $idx++;
+            Indexer::increment();
         }
         return implode(" {$this->and_or} ", $array);
     }

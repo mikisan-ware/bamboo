@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace mikisan\core\basis\bamboo;
 
 use \mikisan\core\util\STR;
+use \mikisan\core\basis\bamboo\Indexer;
 use \mikisan\core\exception\BambooException;
 
 class Where
@@ -92,16 +93,16 @@ class Where
         throw new BambooException("Where に不正なデータが渡されました。[{$value}:{$obj}]");
     }
     
-    public function toSQL(int &$idx = 0)
+    public function toSQL()
     {
         $array = [];
         foreach($this->where as $piece)
         {
             $array[] = (is_object($piece) && get_class($piece) === "mikisan\\core\\basis\\bamboo\Where")
-                            ? "({$piece->toSql($idx)}\n      )"
-                            : $piece->toSql($idx)
+                            ? "({$piece->toSql(Indexer::get())}\n      )"
+                            : $piece->toSql(Indexer::get())
                             ;
-            $idx++;
+            Indexer::increment();
         }
         
         return implode("\n" . STR::lpad($this->and_or, 5) . " ", $array);

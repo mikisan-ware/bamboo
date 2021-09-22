@@ -15,6 +15,7 @@ namespace mikisan\core\basis\bamboo;
 use \mikisan\core\util\EX;
 use \mikisan\core\util\STR;
 use \mikisan\core\basis\bamboo\DBUTIL;
+use \mikisan\core\basis\bamboo\Indexer;
 use \mikisan\core\exception\BambooException;
 
 class Update
@@ -78,8 +79,8 @@ class Update
         $idx    = 0;
         foreach($this->update as $key => $value)
         {
-            $sets[]     = DBUTIL::wrapID($key) . " = :" . DBUTIL::strip($key) . "_{$idx}";
-            $idx++;
+            $sets[]     = DBUTIL::wrapID($key) . " = :" . DBUTIL::strip($key) . "_" . Indexer::get();
+            Indexer::increment();
         }
         return STR::indent(implode(", ", $sets));
     }

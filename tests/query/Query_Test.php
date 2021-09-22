@@ -19,6 +19,7 @@ use \mikisan\core\basis\bamboo\Where;
 use \mikisan\core\basis\bamboo\GroupBy;
 use \mikisan\core\basis\bamboo\Having;
 use \mikisan\core\basis\bamboo\OrderBy;
+use \mikisan\core\basis\bamboo\Indexer;
 use \mikisan\core\basis\settings\BambooSettings;
 use \mikisan\core\exception\BambooException;
 
@@ -35,7 +36,10 @@ class Query_Test extends TestCase
     
     private     $classname  = "mikisan\\core\\basis\\bamboo\\Query";
 
-    public function setUp(): void {}
+    public function setUp(): void
+    {
+        Indexer::reset();
+    }
     
     public function test_build()
     {
@@ -122,14 +126,14 @@ FROM
             *
         FROM
             `test`
-        WHERE `param1` = :param1_0
+        WHERE `param1` = :param1_1
     ) AS B,
     (
         SELECT
             *
         FROM
             `test`
-        WHERE `param1` = :param1_0
+        WHERE `param1` = :param1_2
     ) AS C
 EOL;
         $this->assertSame($expect, $qry->toSQL());
@@ -582,13 +586,14 @@ EOL;
             "param2"    => "abc",
             "param3"    => new DateTime("now")
         ];
-        $qry    = Query::build()->update("test")->set($values)->where(["param1", 5], ["param2", Op::GT]);
+        $qry    = Query::build()->update("test")->set($values)->where(["param1", 5], ["param2", Op::GT, 999]);
         $expect = <<< EOL
 UPDATE `test`
 SET
     `param1` = :param1_0, `param2` = :param2_1, `param3` = :param3_2
 WHERE `param1` = :param1_3
   AND `param2` > :param2_4
+
 EOL;
         $this->assertSame($expect, $qry->toSQL());
     }

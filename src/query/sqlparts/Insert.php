@@ -15,6 +15,7 @@ namespace mikisan\core\basis\bamboo;
 use \mikisan\core\util\EX;
 use \mikisan\core\util\STR;
 use \mikisan\core\basis\bamboo\DBUTIL;
+use \mikisan\core\basis\bamboo\Indexer;
 use \mikisan\core\exception\BambooException;
 
 class Insert
@@ -80,8 +81,8 @@ class Insert
         foreach($this->insert as $key => $value)
         {
             $params[]   = DBUTIL::wrapID($key);
-            $values[]   = ":" . DBUTIL::strip($key) . "_{$idx}";
-            $idx++;
+            $values[]   = ":" . DBUTIL::strip($key) . "_" . Indexer::get();
+            Indexer::increment();
         }
         return "(\n" . STR::indent(implode(", ", $params)) . "\n) VALUES (\n" . STR::indent(implode(", ", $values)) . "\n)";
     }
