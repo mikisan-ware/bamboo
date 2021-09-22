@@ -16,12 +16,11 @@ use \mikisan\core\basis\bamboo\OrderBy;
 class BambooSettings
 {
     const   DEFAULT_SORT    = OrderBy::DESC;
-    
-    /*
-    const   CONNECT         = true;
     const   RETRY_CONNECT   = 3;        // 接続失敗時のリトライ回数
     const   RETRY_INTERVAL  = 500;      // 接続失敗時のリトライインターバル（ミリ秒）
     
+    /*
+    const   CONNECT         = true;
     const   DEFAULT_USER    = "SYSTEM";
     const   DEFAULT_PROC    = "PINE";
     

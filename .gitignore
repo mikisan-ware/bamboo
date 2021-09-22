@@ -1,3 +1,4 @@
+/docker
 /tests/coverage-report
 /vendor
 .phpunit.result.cache

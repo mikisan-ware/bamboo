@@ -18,12 +18,12 @@ use \mikisan\core\basis\bamboo\OrderPiece;
 use \mikisan\core\basis\settings\BambooSettings;
 use \mikisan\core\exception\BambooException;
 
-require_once __DIR__ . "/../../vendor/autoload.php";
-$project_root = realpath(__DIR__ . "/../../../../../");
+require_once __DIR__ . "/../../../vendor/autoload.php";
+$project_root = realpath(__DIR__ . "/../../../../../../");
 require_once "{$project_root}/tests/TestCaseTrait.php";
 
-Autoload::register(__DIR__ . "/../../src", true);
-Autoload::register(__DIR__ . "/../../tests/folder", true);
+Autoload::register(__DIR__ . "/../../../src", true);
+Autoload::register(__DIR__ . "/../../../tests/folder", true);
 
 class OrderPiece_Test extends TestCase
 {

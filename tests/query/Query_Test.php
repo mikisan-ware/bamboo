@@ -50,7 +50,7 @@ class Query_Test extends TestCase
 SELECT
     `A`.`test1`, `B`.`test2`, `C`.`test3`
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_from()
@@ -60,7 +60,7 @@ EOL;
 FROM
     `test`
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_from_with_alias()
@@ -70,7 +70,7 @@ EOL;
 FROM
     `test` AS A
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_from_multiple_with_alias()
@@ -82,7 +82,7 @@ FROM
     `test2` AS B,
     `test3` AS C
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_from_query()
@@ -99,7 +99,7 @@ FROM
         WHERE `param1` = :param1_0
     ) AS A
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_from_multiple_query()
@@ -132,7 +132,35 @@ FROM
         WHERE `param1` = :param1_0
     ) AS C
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_from_string()
+    {
+        $q = <<< EOL
+SELECT [:start_date] + INTERVAL seq_no DAY AS date
+FROM (
+    SELECT @seq_no := 0 AS seq_no
+    UNION
+    SELECT @seq_no := @seq_no + 1 AS seq_no FROM information_schema.COLUMNS
+    LIMIT 5
+) AS tmp
+EOL;
+        
+        $qry   = Query::build()->from(Query::text($q)->as("A"));
+        $expect = <<< EOL
+FROM
+    (
+        SELECT [:start_date] + INTERVAL seq_no DAY AS date
+        FROM (
+            SELECT @seq_no := 0 AS seq_no
+            UNION
+            SELECT @seq_no := @seq_no + 1 AS seq_no FROM information_schema.COLUMNS
+            LIMIT 5
+        ) AS tmp
+    ) AS A
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_inner_join_on()
@@ -145,7 +173,7 @@ INNER JOIN
     `test2` AS B
 ON `A`.`test1` = `B`.`test2`
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_inner_join_using()
@@ -158,7 +186,7 @@ INNER JOIN
     `test2` AS B
 USING `test1`
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_left_join_on()
@@ -171,7 +199,7 @@ LEFT OUTER JOIN
     `test2` AS B
 ON `A`.`test1` = `B`.`test2`
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_left_join_using()
@@ -184,7 +212,7 @@ LEFT OUTER JOIN
     `test2` AS B
 USING `test1`
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_right_join_on()
@@ -197,7 +225,7 @@ RIGHT OUTER JOIN
     `test2` AS B
 ON `A`.`test1` = `B`.`test2`
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_right_join_using()
@@ -210,7 +238,7 @@ RIGHT OUTER JOIN
     `test2` AS B
 USING `test1`
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
 
     public function test_full_join_on()
@@ -223,7 +251,7 @@ FULL OUTER JOIN
     `test2` AS B
 ON `A`.`test1` = `B`.`test2`
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_full_join_using()
@@ -236,7 +264,7 @@ FULL OUTER JOIN
     `test2` AS B
 USING `test1`
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_cross_join_on()
@@ -249,7 +277,7 @@ CROSS JOIN
     `test2` AS B
 ON `A`.`test1` = `B`.`test2`
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_cross_join_using()
@@ -262,7 +290,7 @@ CROSS JOIN
     `test2` AS B
 USING `test1`
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_join_by_query()
@@ -282,13 +310,13 @@ LEFT OUTER JOIN
     ) AS B
 ON `A`.`test1` = `B`.`test2`
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_where()
     {
         $qry  = Query::build()->where(["A.test1", 1]);
-        $this->assertSame("WHERE `A`.`test1` = :A_test1_0", $qry->getQuery());
+        $this->assertSame("WHERE `A`.`test1` = :A_test1_0", $qry->toSQL());
     }
     
     public function test_where_multiple()
@@ -299,7 +327,7 @@ WHERE `A`.`test1` = :A_test1_0
   AND `B`.`test2` >= :B_test2_1
   AND `test3` IN (:test3_2_0, :test3_2_1, :test3_2_2)
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_where_multiple2()
@@ -312,19 +340,19 @@ WHERE `A`.`test1` = :A_test1_0
   AND `test3` IN (:test3_2_0, :test3_2_1, :test3_2_2)
       )
 EOL;
-        $this->assertSame($expect, $qry->getQuery());
+        $this->assertSame($expect, $qry->toSQL());
     }
     
     public function test_groupBy()
     {
         $qry  = Query::build()->groupBy("test1", "test2", "test3");
-        $this->assertSame("GROUP BY `test1`, `test2`, `test3`", $qry->getQuery());
+        $this->assertSame("GROUP BY `test1`, `test2`, `test3`", $qry->toSQL());
     }
     
     public function test_having()
     {
         $qry  = Query::build()->having([Exp::as("COUNT(:@)", "test"), Op::GTE, 20]);
-        $this->assertSame("HAVING COUNT(`test`) >= :COUNT_test__0", $qry->getQuery());
+        $this->assertSame("HAVING COUNT(`test`) >= :COUNT_test__0", $qry->toSQL());
     }
     
     public function test_having_multiple()
@@ -333,49 +361,87 @@ EOL;
                 Having::AND, 
                 [Exp::as("COUNT(:@)", "test1"), Op::GTE, 20], 
                 [Exp::as("MAX(:@)", "test2"), 100]);
-        $this->assertSame("HAVING COUNT(`test1`) >= :COUNT_test1__0 AND MAX(`test2`) = :MAX_test2__1", $qry->getQuery());
+        $this->assertSame("HAVING COUNT(`test1`) >= :COUNT_test1__0 AND MAX(`test2`) = :MAX_test2__1", $qry->toSQL());
     }
     
     public function test_orderBy()
     {
         $qry  = Query::build()->orderBy(["test1", OrderBy::ASC]);
-        $this->assertSame("ORDER BY `test1` ASC", $qry->getQuery());
+        $this->assertSame("ORDER BY `test1` ASC", $qry->toSQL());
     }
     
     public function test_orderBy_multiple()
     {
         $qry  = Query::build()->orderBy(["test1", OrderBy::ASC], ["test2", OrderBy::DESC], "test3");
-        $this->assertSame("ORDER BY `test1` ASC, `test2` DESC, `test3` " . BambooSettings::DEFAULT_SORT, $qry->getQuery());
+        $this->assertSame("ORDER BY `test1` ASC, `test2` DESC, `test3` " . BambooSettings::DEFAULT_SORT, $qry->toSQL());
     }
     
     public function test_limit()
     {
         $qry  = Query::build()->limit(3);
-        $this->assertSame("LIMIT 3", $qry->getQuery());
+        $this->assertSame("LIMIT 3", $qry->toSQL());
     }
     
     public function test_limit_with_offset()
     {
         $qry  = Query::build()->limit(3,7);
-        $this->assertSame("LIMIT 3 OFFSET 7", $qry->getQuery());
+        $this->assertSame("LIMIT 3 OFFSET 7", $qry->toSQL());
     }
     
     public function test_lock()
     {
         $qry  = Query::build()->lock();
-        $this->assertSame("FOR UPDATE", $qry->getQuery());
+        $this->assertSame("FOR UPDATE", $qry->toSQL());
     }
     
     public function test_lock_false()
     {
         $qry  = Query::build()->lock(false);
-        $this->assertSame("", $qry->getQuery());
+        $this->assertSame("", $qry->toSQL());
     }
     
     public function test_lock_true()
     {
         $qry  = Query::build()->lock(true);
-        $this->assertSame("FOR UPDATE", $qry->getQuery());
+        $this->assertSame("FOR UPDATE", $qry->toSQL());
+    }
+    
+    public function test_insert()
+    {
+        $values = [
+            "param1"    => 1,
+            "param2"    => "abc",
+            "param3"    => new DateTime("now")
+        ];
+        $qry    = Query::build()->insert($values)->into("test");
+        $expect = <<< EOL
+INSERT INTO `test`(
+    `param1`, `param2`, `param3`
+) VALUES (
+    :param1_0, :param2_1, :param3_2
+)
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_insert_select_all()
+    {
+        $values = [
+            "param1"    => 1,
+            "param2"    => "abc",
+            "param3"    => new DateTime("now")
+        ];
+        $qry    = Query::build()->insert()->into("test");
+        $expect = <<< EOL
+INSERT INTO `test`(
+    `param1`, `param2`, `param3`
+) VALUES (
+    :param1_0, :param2_1, :param3_2
+)
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
     }
     
 }

@@ -21,10 +21,16 @@ use \mikisan\core\exception\BambooException;
 
 class Query
 {
+    const   BUILD = "BUILD", STRING = "STRING";
+    
     const   SELECT = "SELECT", INSERT = "INSERT", 
             UPDATE = "UPDATE", DELETE = "DELETE";
     
+    private $mode       = self::BUILD;
     private $type       = self::SELECT;
+    
+    private $query      = "";
+    
     private $select     = null;
     private $from       = null;
     private $where      = null;
@@ -34,13 +40,25 @@ class Query
     private $limit      = null;
     private $lock       = false;
     private $alias      = null;
+    
+    private $insert     = null;
+    private $into       = null;
 
     public function __construct() {}
+    
+    public static function text(string $query): Query
+    {
+        $qry        = new Query();
+        $qry->query = DBUTIL::strip($query);
+        $qry->mode  = self::STRING;
+        return $qry;
+    }
     
     public static function build($type = self::SELECT): Query
     {
         $qry        = new Query();
         $qry->type  = $type;
+        $qry->mode  = self::BUILD;
         return $qry;
     }
     
@@ -48,6 +66,7 @@ class Query
     {
         switch(true)
         {
+            case $key === "mode":
             case $key === "type":
             case $key === "alias":
                 return $this->{$key};
@@ -56,9 +75,37 @@ class Query
         throw new BambooException("Queryでは {$key} は取得できません。");
     }
     
+    ////////////////////////////////////////////////////////////////////////////
+    //
+    // INSERT Query
+    
+    public function insert(...$insert): Query
+    {
+        $this->insert   = new Insert(...$insert);
+        $this->type     = Query::INSERT;
+        return $this;
+    }
+    
+    public function add(...$insert): Query
+    {
+        $this->insert->add($insert);
+        return $this;
+    }
+    
+    public function into(string $into): Query
+    {
+        $this->into     = $into;
+        return $this;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //
+    // SELECT Query
+    
     public function select(...$select): Query
     {
         $this->select   = new Select(...$select);
+        $this->type     = Query::SELECT;
         return $this;
     }
     
@@ -165,17 +212,52 @@ class Query
         return $this;
     }
     
-    public function getQuery(): string
+    public function as(string $alias): Query
     {
-        switch(true)
-        {
-            case $this->type === self::SELECT:
-            default:
-                return $this->toSQL();
-        }
+        $this->alias    = $alias;
+        return $this;
     }
     
     public function toSQL(int $indent = 0)
+    {
+        return ($this->mode  === self::BUILD)
+                    ? $this->build_query($indent)
+                    : $this->query_from_string($indent)
+                    ;
+    }
+    
+    private function query_from_string(int $indent)
+    {
+        return (!EX::empty($this->alias))
+                    ? "(\n" . STR::indent(trim($this->query), $indent) . "\n) AS {$this->get_alias()}"
+                    : trim($this->query)
+                    ;
+    }
+    
+    private function build_query(int $indent)
+    {
+        switch(true)
+        {
+            case $this->type === Query::INSERT:
+                return $this->build_query_insert($indent);
+                    
+            case $this->type === Query::SELECT:
+            default:
+                return $this->build_query_select($indent);
+        }
+    }
+    
+    private function build_query_insert(int $indent)
+    {
+        if(EX::empty($this->into))
+        {
+            throw new BambooException("INSERT を行うテーブルが指定されていません。into(テーブル名) で指定してください。");
+        }
+        $qry    = $this->get_insert();
+        return $qry;
+    }
+    
+    private function build_query_select(int $indent)
     {
         $qry    = "";
         $qry    .= !EX::empty($this->select)    ? $this->get_select() : "";
@@ -235,6 +317,17 @@ class Query
     private function get_alias(): string
     {
         return DBUTIL::strip($this->alias);
+    }
+    
+    private function get_insert(): string
+    {
+        $qry    = "INSERT INTO " . DBUTIL::wrapID($this->into);
+        $qry    .= !EX::empty($this->from)
+                        ? $this->insert->toSQL()
+                        : $this->insert->toSelectSQL($this->from) . "\n" . $this->from->toSQL()
+                        ;
+        $qry    .= "\n";
+        return $qry;
     }
     
 }

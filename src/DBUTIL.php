@@ -89,7 +89,7 @@ class DBUTIL
      */
     public static function strip(string $value): string
     {
-        return preg_replace("/('|\"|;|--+|\.)/u", "", $value);
+        return preg_replace("/('|\"|;|--+)/u", "", $value);
     }
     
     /**
