@@ -19,6 +19,7 @@ use \mikisan\core\basis\bamboo\Where;
 use \mikisan\core\basis\bamboo\GroupBy;
 use \mikisan\core\basis\bamboo\Having;
 use \mikisan\core\basis\bamboo\OrderBy;
+use \mikisan\core\basis\bamboo\Column;
 use \mikisan\core\basis\bamboo\Indexer;
 use \mikisan\core\basis\settings\BambooSettings;
 use \mikisan\core\exception\BambooException;
@@ -355,7 +356,7 @@ EOL;
     
     public function test_having()
     {
-        $qry  = Query::build()->having([Exp::as("COUNT(:@)", "test"), Op::GTE, 20]);
+        $qry  = Query::build()->having([Exp::desc("COUNT(:@)", "test"), Op::GTE, 20]);
         $this->assertSame("HAVING COUNT(`test`) >= :COUNT_test__0", $qry->toSQL());
     }
     
@@ -363,8 +364,8 @@ EOL;
     {
         $qry  = Query::build()->having(
                 Having::AND, 
-                [Exp::as("COUNT(:@)", "test1"), Op::GTE, 20], 
-                [Exp::as("MAX(:@)", "test2"), 100]);
+                [Exp::desc("COUNT(:@)", "test1"), Op::GTE, 20], 
+                [Exp::desc("MAX(:@)", "test2"), 100]);
         $this->assertSame("HAVING COUNT(`test1`) >= :COUNT_test1__0 AND MAX(`test2`) = :MAX_test2__1", $qry->toSQL());
     }
     
@@ -595,6 +596,63 @@ WHERE `param1` = :param1_3
   AND `param2` > :param2_4
 
 EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_update_exp()
+    {
+        $values = [
+            "param1"    => Exp::desc("CONCAT(:@, :@)", ["first_name", "last_name"])
+        ];
+        $qry    = Query::build()->update("test")->set($values);
+        $expect = <<< EOL
+UPDATE `test`
+SET
+    `param1` = CONCAT(`first_name`, `last_name`)
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_update_subquery()
+    {
+        $values = [
+            "param1"    => Query::build()
+                                ->from("managers")
+                                ->where(["test.no", Column::as("manager.no")])
+                                ->select("managers.name")
+        ];
+        $qry    = Query::build()->update("test")->set($values);
+        $expect = <<< EOL
+UPDATE `test`
+SET
+    `param1` = (
+        SELECT
+            `managers`.`name`
+        FROM
+            `managers`
+        WHERE `test`.`no` = `manager`.`no`
+    )
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_update_case()
+    {
+        $values = [
+            "param1"    => Exp::case("test.gender")->when("M", "Mr.")->when("F", "Ms.")
+        ];
+        $qry    = Query::build()->update("test")->set($values);
+        $expect = <<< EOL
+UPDATE `test`
+SET
+    `param1` = CASE `test`.`gender`
+        WHEN 'M' THEN 'Mr.'
+        WHEN 'F' THEN 'Ms.'
+    END
+
+EOL;    
         $this->assertSame($expect, $qry->toSQL());
     }
     

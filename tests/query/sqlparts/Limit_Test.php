@@ -13,6 +13,7 @@ declare(strict_types=1);
 use \mikisan\core\util\autoload\Autoload;
 use \PHPUnit\Framework\TestCase;
 use \mikisan\core\basis\bamboo\Limit;
+use \mikisan\core\basis\bamboo\Indexer;
 use \mikisan\core\exception\BambooException;
 
 require_once __DIR__ . "/../../../vendor/autoload.php";
@@ -25,7 +26,10 @@ class Limit_Test extends TestCase
 {
     use TestCaseTrait;
     
-    public function setUp(): void {}
+    public function setUp(): void
+    {
+        Indexer::reset();
+    }
     
     public function test_constructor()
     {

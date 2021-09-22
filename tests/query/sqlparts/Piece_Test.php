@@ -16,6 +16,7 @@ use \mikisan\core\basis\bamboo\Op;
 use \mikisan\core\basis\bamboo\Exp;
 use \mikisan\core\basis\bamboo\Piece;
 use \mikisan\core\basis\bamboo\Where;
+use \mikisan\core\basis\bamboo\Indexer;
 use \mikisan\core\basis\settings\BambooSettings;
 use \mikisan\core\exception\BambooException;
 
@@ -30,7 +31,10 @@ class Piece_Test extends TestCase
 {
     use TestCaseTrait;
     
-    public function setUp(): void {}
+    public function setUp(): void
+    {
+        Indexer::reset();
+    }
     
     public function test_constructor()
     {
@@ -200,7 +204,7 @@ class Piece_Test extends TestCase
     
     public function test_key_expression()
     {
-        $piece  = new Piece(Exp::as("MAX(:@)", ["test"]), Op::MATCH, 1);
+        $piece  = new Piece(Exp::desc("MAX(:@)", ["test"]), Op::MATCH, 1);
         $this->assertSame("MAX(`test`) = :MAX_test__0", $piece->toSQL());
     }
     

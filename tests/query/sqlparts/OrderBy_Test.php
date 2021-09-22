@@ -15,6 +15,7 @@ use \PHPUnit\Framework\TestCase;
 use \mikisan\core\basis\bamboo\Exp;
 use \mikisan\core\basis\bamboo\OrderBy;
 use \mikisan\core\basis\bamboo\OrderPiece;
+use \mikisan\core\basis\bamboo\Indexer;
 use \mikisan\core\basis\settings\BambooSettings;
 use \mikisan\core\exception\BambooException;
 
@@ -32,7 +33,10 @@ class OrderBy_Test extends TestCase
     private $classname      = "mikisan\\core\\basis\\bamboo\\OrderPiece";
     private $exp_classname  = "mikisan\\core\\basis\\bamboo\\Exp";
     
-    public function setUp(): void {}
+    public function setUp(): void
+    {
+        Indexer::reset();
+    }
     
     public function test_constructor()
     {
@@ -62,7 +66,7 @@ class OrderBy_Test extends TestCase
     
     public function test_constructor_expression()
     {
-        $ob     = new OrderBy(Exp::as("MAX(:@)", "test"));
+        $ob     = new OrderBy(Exp::desc("MAX(:@)", "test"));
         
         $this->assertCount(1, $ob->order_by);
         $this->assertSame($this->classname, get_class($ob->order_by[0]));
@@ -73,7 +77,7 @@ class OrderBy_Test extends TestCase
     
     public function test_constructor_expression_arg()
     {
-        $ob     = new OrderBy(Exp::as(":@ - :@", ["test1", "test2"]));
+        $ob     = new OrderBy(Exp::desc(":@ - :@", ["test1", "test2"]));
         
         $this->assertCount(1, $ob->order_by);
         $this->assertSame($this->classname, get_class($ob->order_by[0]));
@@ -152,7 +156,7 @@ class OrderBy_Test extends TestCase
     public function test_constructor_multiple_args()
     {
         $op     = new OrderPiece("test3", OrderBy::ASC);
-        $ob     = new OrderBy("test1", ["test2", OrderBy::DESC], $op, [Exp::as(":@ * :@", ["test4", "test5"]), OrderBy::ASC]);
+        $ob     = new OrderBy("test1", ["test2", OrderBy::DESC], $op, [Exp::desc(":@ * :@", ["test4", "test5"]), OrderBy::ASC]);
         
         $this->assertCount(4, $ob->order_by);
         //
@@ -223,7 +227,7 @@ class OrderBy_Test extends TestCase
     public function test_toSQL_multiple_args()
     {
         $op     = new OrderPiece("A.test3", OrderBy::ASC);
-        $ob     = new OrderBy("test1", ["test2", OrderBy::DESC], $op, [Exp::as(":@ * :@", ["test4", "test5"]), OrderBy::ASC]);
+        $ob     = new OrderBy("test1", ["test2", OrderBy::DESC], $op, [Exp::desc(":@ * :@", ["test4", "test5"]), OrderBy::ASC]);
         
         $expect = "`test1` ".BambooSettings::DEFAULT_SORT.", `test2` DESC, `A`.`test3` ASC, `test4` * `test5` ASC";
         $this->assertSame($expect, $ob->toSQL());

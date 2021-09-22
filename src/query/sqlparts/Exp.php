@@ -20,9 +20,9 @@ use \mikisan\core\exception\BambooException;
 class Exp
 {
     
-    const AS = "AS", CASE = "CASE";
+    const DESC = "DESC", CASE = "CASE";
     
-    private $type   = self::AS;
+    private $type   = self::DESC;
     private $expression;
     private $params     = [];
     
@@ -47,7 +47,7 @@ class Exp
                 }
                 break;
             
-            case $type === self::AS:
+            case $type === self::DESC:
             default:
                 
                 $this->expression   = (count($parts) === 1)
@@ -58,9 +58,9 @@ class Exp
         }
     }
     
-    public static function as(string $expression, $ids = []): Exp
+    public static function desc(string $expression, $ids = []): Exp
     {
-        return new Exp($expression, $ids, self::AS);
+        return new Exp($expression, $ids, self::DESC);
     }
     
     public static function case(string $expression = ""): Exp
@@ -83,7 +83,7 @@ class Exp
     public function toSQL(): string
     {
         $matches    = [];
-        return ($this->type === self::AS)
+        return ($this->type === self::DESC)
                     ? $this->replace_exp()
                     : $this->replace_case()
                     ;
@@ -99,14 +99,16 @@ class Exp
         {
             $exp[]  = "WHEN {$this->get_when($w[0])} THEN " . DBUTIL::escape($w[1]);
         }
-        $exp[]      = "ELSE {$this->else}";
+        if(!EX::empty($this->else))
+        {
+            $exp[]  = "ELSE {$this->else}";
+        }
         $when       = STR::indent(implode("\n", $exp), 1);
         
         return <<< EOL
 CASE{$object}
 {$when}
 END{$alias}
-
 EOL;
     }
     

@@ -15,6 +15,7 @@ use \PHPUnit\Framework\TestCase;
 use \mikisan\core\basis\bamboo\Op;
 use \mikisan\core\basis\bamboo\Exp;
 use \mikisan\core\basis\bamboo\Having;
+use \mikisan\core\basis\bamboo\Indexer;
 use \mikisan\core\basis\settings\BambooSettings;
 use \mikisan\core\exception\BambooException;
 
@@ -31,7 +32,10 @@ class Having_Test extends TestCase
     
     private $classname      = "mikisan\\core\\basis\\bamboo\\Piece";
     
-    public function setUp(): void {}
+    public function setUp(): void
+    {
+        Indexer::reset();
+    }
     
     public function test_constructor()
     {
@@ -68,7 +72,7 @@ class Having_Test extends TestCase
     
     public function test_constructor_3_parameters()
     {
-        $having  = new Having([Exp::as("MAX(:@)", "test"), Op::LT, 7]);
+        $having  = new Having([Exp::desc("MAX(:@)", "test"), Op::LT, 7]);
         $this->assertSame("MAX(`test`) < :MAX_test__0", $having->toSQL());
     }
     

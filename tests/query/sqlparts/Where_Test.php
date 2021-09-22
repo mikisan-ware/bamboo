@@ -14,6 +14,7 @@ use \mikisan\core\util\autoload\Autoload;
 use \PHPUnit\Framework\TestCase;
 use \mikisan\core\basis\bamboo\Op;
 use \mikisan\core\basis\bamboo\Where;
+use \mikisan\core\basis\bamboo\Indexer;
 use \mikisan\core\basis\settings\BambooSettings;
 use \mikisan\core\exception\BambooException;
 
@@ -30,7 +31,10 @@ class Where_Test extends TestCase
     
     private $classname      = "mikisan\\core\\basis\\bamboo\\Piece";
     
-    public function setUp(): void {}
+    public function setUp(): void
+    {
+        Indexer::reset();
+    }
     
     public function test_constructor()
     {

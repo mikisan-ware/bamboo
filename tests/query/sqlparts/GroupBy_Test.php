@@ -14,6 +14,7 @@ use \mikisan\core\util\autoload\Autoload;
 use \PHPUnit\Framework\TestCase;
 use \mikisan\core\basis\bamboo\Exp;
 use \mikisan\core\basis\bamboo\GroupBy;
+use \mikisan\core\basis\bamboo\Indexer;
 use \mikisan\core\basis\settings\BambooSettings;
 use \mikisan\core\exception\BambooException;
 
@@ -30,7 +31,10 @@ class GroupBy_Test extends TestCase
     
     private $exp_classname  = "mikisan\\core\\basis\\bamboo\\Exp";
     
-    public function setUp(): void {}
+    public function setUp(): void
+    {
+        Indexer::reset();
+    }
     
     public function test_constructor()
     {
@@ -68,7 +72,7 @@ class GroupBy_Test extends TestCase
     
     public function test_constructor_expression()
     {
-        $gb     = new GroupBy(Exp::as("MAX(:@)", "test"));
+        $gb     = new GroupBy(Exp::desc("MAX(:@)", "test"));
         
         $this->assertCount(1, $gb->group_by);
         $this->assertSame($this->exp_classname, get_class($gb->group_by[0]));
@@ -89,7 +93,7 @@ class GroupBy_Test extends TestCase
     
     public function test_toSQL_expression()
     {
-        $gb     = new GroupBy(Exp::as("MAX(:@)", "test"));
+        $gb     = new GroupBy(Exp::desc("MAX(:@)", "test"));
         $this->assertSame("MAX(`test`)", $gb->toSQL());
     }
     

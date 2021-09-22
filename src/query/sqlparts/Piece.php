@@ -15,6 +15,7 @@ namespace mikisan\core\basis\bamboo;
 use \mikisan\core\basis\bamboo\Op;
 use \mikisan\core\basis\bamboo\Where;
 use \mikisan\core\basis\bamboo\Query;
+use \mikisan\core\basis\bamboo\Column;
 use \mikisan\core\basis\bamboo\DBUTIL;
 use \mikisan\core\exception\BambooException;
 use \mikisan\core\util\EX;
@@ -92,10 +93,10 @@ class Piece
     {
         $type   = strtoupper($this->type);
         
-        if(is_object($val) && !($val instanceof Query))
-        {
-                $obj = gettype($val);
-                throw new BambooException("Pieceに不正な型の値が渡されました。[{$obj}]");
+        if(is_object($val) && !($val instanceof Query || $val instanceof Column))
+        {            
+            $obj = gettype($val);
+            throw new BambooException("Pieceに不正な型の値が渡されました。[{$obj}]");
         }
         if ($type === Op::EXISTS || $type === Op::NOTEXISTS)
         {
@@ -196,7 +197,10 @@ class Piece
     
     public function toSQL(int $idx = 0): string
     {
-        $place_holder   = ":{$this->to_tiny_label($this->key)}_{$idx}";
+        $place_holder   = ($this->value instanceof Column)
+                                ? $this->key_to_sql($this->value)
+                                : ":{$this->to_tiny_label($this->key)}_{$idx}"
+                                ;
         
         switch(true)
         {

@@ -15,6 +15,7 @@ use \PHPUnit\Framework\TestCase;
 use \mikisan\core\basis\bamboo\Exp;
 use \mikisan\core\basis\bamboo\OrderBy;
 use \mikisan\core\basis\bamboo\OrderPiece;
+use \mikisan\core\basis\bamboo\Indexer;
 use \mikisan\core\basis\settings\BambooSettings;
 use \mikisan\core\exception\BambooException;
 
@@ -29,7 +30,10 @@ class OrderPiece_Test extends TestCase
 {
     use TestCaseTrait;
     
-    public function setUp(): void {}
+    public function setUp(): void
+    {
+        Indexer::reset();
+    }
     
     public function test_constructor()
     {
@@ -57,7 +61,7 @@ class OrderPiece_Test extends TestCase
     
     public function test_constructor_set_expression_and_sort()
     {
-        $op     = new OrderPiece(Exp::as("MAX(:@)", "test"), OrderBy::ASC);
+        $op     = new OrderPiece(Exp::desc("MAX(:@)", "test"), OrderBy::ASC);
         
         $this->assertSame("MAX(`test`)", $op->expression->toSQL());
         $this->assertSame(OrderBy::ASC, $op->sort);
@@ -65,7 +69,7 @@ class OrderPiece_Test extends TestCase
     
     public function test_constructor_set_multipart_expression_and_sort()
     {
-        $op     = new OrderPiece(Exp::as(":@ - :@", ["test1", "test2"]), OrderBy::ASC);
+        $op     = new OrderPiece(Exp::desc(":@ - :@", ["test1", "test2"]), OrderBy::ASC);
         
         $this->assertSame("`test1` - `test2`", $op->expression->toSQL());
         $this->assertSame(OrderBy::ASC, $op->sort);
@@ -117,13 +121,13 @@ class OrderPiece_Test extends TestCase
     
     public function test_expression_toSQL()
     {
-        $op     = new OrderPiece(Exp::as("MAX(:@)", ["test"]), OrderBy::ASC);
+        $op     = new OrderPiece(Exp::desc("MAX(:@)", ["test"]), OrderBy::ASC);
         $this->assertSame("MAX(`test`) ASC", $op->toSQL());
     }
     
     public function test_multipart_expression_toSQL()
     {
-        $op     = new OrderPiece(Exp::as(":@ - :@", ["A.test1", "B.test2"]), OrderBy::DESC);
+        $op     = new OrderPiece(Exp::desc(":@ - :@", ["A.test1", "B.test2"]), OrderBy::DESC);
         $this->assertSame("`A`.`test1` - `B`.`test2` DESC", $op->toSQL());
     }
     
