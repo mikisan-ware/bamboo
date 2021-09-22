@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace mikisan\core\basis\bamboo;
 
+use \mikisan\core\util\STR;
 use \mikisan\core\basis\bamboo\Op;
 use \mikisan\core\basis\bamboo\Where;
 use \mikisan\core\basis\bamboo\Query;
@@ -138,10 +139,10 @@ class Piece
                 $i++;
             }
         }
-        if (!is_array($val) && $this->type_array_value($type))
+        if (!is_array($val) && $this->type_array_value($type) && !($val instanceof Query))
         {
-            $obj    = gettype($v);
-            $value  = (string)$v;
+            $obj    = gettype($val);
+            $value  = (string)$val;
             throw new BambooException("IN、NOTIN、BETWEEN、NOTBETWEEN の Piece の値に配列以外が渡されました。[{$value}:{$obj}]");
         }
         if (is_null($val) && $this->type_value_nullable($type))
@@ -197,10 +198,18 @@ class Piece
     
     public function toSQL(int $idx = 0): string
     {
-        $place_holder   = ($this->value instanceof Column)
-                                ? $this->key_to_sql($this->value)
-                                : ":{$this->to_tiny_label($this->key)}_{$idx}"
-                                ;
+        if($this->value instanceof Column)
+        {
+            $place_holder   = $this->key_to_sql($this->value);
+        }
+        else if($this->value instanceof Query)
+        {
+            $place_holder   = "(\n" . STR::indent($this->key_to_sql($this->value)). "\n)";
+        }
+        else
+        {
+            $place_holder   = ":{$this->to_tiny_label($this->key)}_{$idx}";
+        }
         
         switch(true)
         {
@@ -234,13 +243,21 @@ class Piece
             case $this->type === Op::IN:
             case $this->type === Op::NOTIN:
                 
-                $place_holders = [];
-                foreach($this->value as $key => $val)
-                {
-                    $place_holders[]   = ":{$this->to_tiny_label($this->key)}_{$idx}_{$key}";
-                }
                 $in = ($this->type === Op::IN) ? "IN" : "NOT IN";
-                return "{$this->key_to_sql($this->key)} {$in} (" . implode(", ", $place_holders) . ")";
+                
+                if($this->value instanceof Query)
+                {
+                    return "{$this->key_to_sql($this->key)} {$in} (\n" . STR::indent($this->value->toSQL()) . "\n)";
+                }
+                else
+                {
+                    $place_holders = [];
+                    foreach($this->value as $key => $val)
+                    {
+                        $place_holders[]   = ":{$this->to_tiny_label($this->key)}_{$idx}_{$key}";
+                    }
+                    return "{$this->key_to_sql($this->key)} {$in} (" . implode(", ", $place_holders) . ")";
+                }
                 
             case $this->type === Op::ISNULL:
                 return "{$this->key_to_sql($this->key)} IS NULL";

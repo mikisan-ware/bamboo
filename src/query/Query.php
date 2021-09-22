@@ -44,7 +44,8 @@ class Query
     
     private $insert     = null;
     private $source     = null;
-    private $into       = null;
+    private $update     = null;
+    private $delete     = null;
     
     public function __construct() {}
     
@@ -93,6 +94,10 @@ class Query
             
             case $this->type === Query::UPDATE:
                 $this->update->table($table);
+                break;
+            
+            case $this->type === Query::DELETE:
+                $this->delete->table($table);
                 break;
             
             default:
@@ -147,6 +152,16 @@ class Query
         return $this;
     }
     
+    ////////////////////////////////////////////////////////////////////////////
+    //
+    // DELETE Query
+    
+    public function delete(string $table = ""): Query
+    {
+        $this->delete   = new Delete($table);
+        $this->type     = Query::DELETE;
+        return $this;
+    }
     
     ////////////////////////////////////////////////////////////////////////////
     //
@@ -293,6 +308,9 @@ class Query
                 
             case $this->type === Query::UPDATE:
                 return $this->build_query_update($indent);
+                
+            case $this->type === Query::DELETE:
+                return $this->build_query_delete($indent);
                     
             case $this->type === Query::SELECT:
             default:
@@ -310,6 +328,17 @@ class Query
     {
         $qry    = $this->get_update();
         $qry    .= !EX::empty($this->where)     ? $this->get_where() : "";
+        $qry    .= !EX::empty($this->order_by)  ? $this->get_order_by() : "";
+        $qry    .= !EX::empty($this->limit)     ? $this->get_limit() : "";
+        return $qry;
+    }
+    
+    private function build_query_delete(int $indent)
+    {
+        $qry    = $this->get_delete();
+        $qry    .= !EX::empty($this->where)     ? $this->get_where() : "";
+        $qry    .= !EX::empty($this->order_by)  ? $this->get_order_by() : "";
+        $qry    .= !EX::empty($this->limit)     ? $this->get_limit() : "";
         return $qry;
     }
     
@@ -390,6 +419,17 @@ class Query
     {
         $qry    = "UPDATE " . DBUTIL::wrapID($this->update->table) . "\n";
         $qry    .= "SET\n" . $this->update->toSQL();
+        $qry    .= "\n";
+        return $qry;
+    }
+    
+    private function get_delete(): string
+    {
+        $qry    = "DELETE FROM " . DBUTIL::wrapID($this->delete->table);
+        $qry    .= !EX::empty($this->where)
+                        ? ""
+                        : ""
+                        ;
         $qry    .= "\n";
         return $qry;
     }

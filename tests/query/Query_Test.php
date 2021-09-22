@@ -656,4 +656,73 @@ EOL;
         $this->assertSame($expect, $qry->toSQL());
     }
     
+    public function test_delete()
+    {
+        $qry    = Query::build()->delete("test");
+        $expect = <<< EOL
+DELETE FROM `test`
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_delete_specify_table()
+    {
+        $qry    = Query::build()->delete()->table("test");
+        $expect = <<< EOL
+DELETE FROM `test`
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_delete_with_where()
+    {
+        $qry    = Query::build()->delete("test")->where(["id", 10]);
+        $expect = <<< EOL
+DELETE FROM `test`
+WHERE `id` = :id_0
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_delete_limit()
+    {
+        $qry    = Query::build()->delete("test")->orderBy("id")->limit(3);
+        $sort   = BambooSettings::DEFAULT_SORT;
+        $expect = <<< EOL
+DELETE FROM `test`
+ORDER BY `id` {$sort}
+LIMIT 3
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_delete_multiple()
+    {
+        $q      = Query::build()->from("scores")->select(Exp::desc("AVG(:@)", "score"));
+        $qr     = Query::build()->from("users")->where(["score", Op::LT, $q])->select("id");
+        $qry    = Query::build()->delete("users")->where(["id", Op::IN, $qr]);
+        $sort   = BambooSettings::DEFAULT_SORT;
+        $expect = <<< EOL
+DELETE FROM `users`
+WHERE `id` IN (
+    SELECT
+        `id`
+    FROM
+        `users`
+    WHERE `score` < (
+        SELECT
+            AVG(`score`)
+        FROM
+            `scores`
+    )
+)
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
 }

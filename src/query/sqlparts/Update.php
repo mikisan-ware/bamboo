@@ -77,7 +77,6 @@ class Update
             throw new BambooException("UPDATE を行うテーブルが指定されていません。table(テーブル名) で指定してください。");
         }
         $sets   = [];
-        $idx    = 0;
         foreach($this->update as $key => $value)
         {
             if($value instanceof Exp)
