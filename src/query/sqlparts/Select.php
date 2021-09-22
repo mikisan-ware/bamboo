@@ -67,6 +67,11 @@ class Select
             $this->select[]   = $sel;
             return;
         }
+        if($sel instanceof Query)
+        {
+            $this->select[]   = $sel;
+            return;
+        }
         if(is_string($sel))
         {
             $parts  = explode(",", $sel);

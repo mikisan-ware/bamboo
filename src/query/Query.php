@@ -42,6 +42,7 @@ class Query
     private $alias      = null;
     
     private $insert     = null;
+    private $source     = null;
     private $into       = null;
 
     public function __construct() {}
@@ -75,28 +76,70 @@ class Query
         throw new BambooException("Queryでは {$key} は取得できません。");
     }
     
+    public function table(string $table): Query
+    {
+        switch(true)
+        {
+            case $this->type === Query::INSERT:
+                $this->insert->table($table);
+                break;
+            
+            case $this->type === Query::UPDATE:
+                $this->update->table($table);
+                break;
+            
+            default:
+                throw new BambooException("現在の Query の動作モードでは table は設定できません。");
+        }
+        return $this;
+    }
+    
     ////////////////////////////////////////////////////////////////////////////
     //
     // INSERT Query
     
-    public function insert(...$insert): Query
+    public function insert(string $table = ""): Query
     {
-        $this->insert   = new Insert(...$insert);
+        $this->insert   = new Insert($table);
         $this->type     = Query::INSERT;
         return $this;
     }
     
     public function add(...$insert): Query
     {
-        $this->insert->add($insert);
+        $this->insert->add(...$insert);
         return $this;
     }
     
     public function into(string $into): Query
     {
-        $this->into     = $into;
+        $this->insert->table($into);
         return $this;
     }
+    
+    public function source(Query $source): Query
+    {
+        $this->source   = $source;
+        return $this;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //
+    // UPDATE Query
+    
+    public function update(string $table = ""): Query
+    {
+        $this->update   = new Update($table);
+        $this->type     = Query::UPDATE;
+        return $this;
+    }
+    
+    public function set(...$update): Query
+    {
+        $this->update->set(...$update);
+        return $this;
+    }
+    
     
     ////////////////////////////////////////////////////////////////////////////
     //
@@ -240,6 +283,9 @@ class Query
         {
             case $this->type === Query::INSERT:
                 return $this->build_query_insert($indent);
+                
+            case $this->type === Query::UPDATE:
+                return $this->build_query_update($indent);
                     
             case $this->type === Query::SELECT:
             default:
@@ -249,11 +295,14 @@ class Query
     
     private function build_query_insert(int $indent)
     {
-        if(EX::empty($this->into))
-        {
-            throw new BambooException("INSERT を行うテーブルが指定されていません。into(テーブル名) で指定してください。");
-        }
         $qry    = $this->get_insert();
+        return $qry;
+    }
+    
+    private function build_query_update(int $indent)
+    {
+        $qry    = $this->get_update();
+        $qry    .= !EX::empty($this->where)     ? $this->get_where() : "";
         return $qry;
     }
     
@@ -321,11 +370,19 @@ class Query
     
     private function get_insert(): string
     {
-        $qry    = "INSERT INTO " . DBUTIL::wrapID($this->into);
-        $qry    .= !EX::empty($this->from)
-                        ? $this->insert->toSQL()
-                        : $this->insert->toSelectSQL($this->from) . "\n" . $this->from->toSQL()
+        $qry    = "INSERT INTO " . DBUTIL::wrapID($this->insert->table);
+        $qry    .= !EX::empty($this->source)
+                        ? $this->insert->toSelectSQL($this->from) . "\n" . $this->source->toSQL()
+                        : $this->insert->toSQL()
                         ;
+        $qry    .= "\n";
+        return $qry;
+    }
+    
+    private function get_update(): string
+    {
+        $qry    = "UPDATE " . DBUTIL::wrapID($this->update->table) . "\n";
+        $qry    .= "SET\n" . $this->update->toSQL();
         $qry    .= "\n";
         return $qry;
     }

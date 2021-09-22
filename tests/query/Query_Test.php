@@ -413,7 +413,7 @@ EOL;
             "param2"    => "abc",
             "param3"    => new DateTime("now")
         ];
-        $qry    = Query::build()->insert($values)->into("test");
+        $qry    = Query::build()->insert("test")->add($values);
         $expect = <<< EOL
 INSERT INTO `test`(
     `param1`, `param2`, `param3`
@@ -425,14 +425,14 @@ EOL;
         $this->assertSame($expect, $qry->toSQL());
     }
     
-    public function test_insert_select_all()
+    public function test_insert_specify_table()
     {
         $values = [
             "param1"    => 1,
             "param2"    => "abc",
             "param3"    => new DateTime("now")
         ];
-        $qry    = Query::build()->insert()->into("test");
+        $qry    = Query::build()->insert()->table("test")->add($values);
         $expect = <<< EOL
 INSERT INTO `test`(
     `param1`, `param2`, `param3`
@@ -440,6 +440,155 @@ INSERT INTO `test`(
     :param1_0, :param2_1, :param3_2
 )
 
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_insert_add_multiple()
+    {
+        $values = [
+            "param1"    => 1,
+            "param2"    => "abc",
+            "param3"    => new DateTime("now")
+        ];
+        $qry    = Query::build()->insert()->table("test")->add($values)->add(["param4" => "def"], ["param5" => 999]);
+        $expect = <<< EOL
+INSERT INTO `test`(
+    `param1`, `param2`, `param3`, `param4`, `param5`
+) VALUES (
+    :param1_0, :param2_1, :param3_2, :param4_3, :param5_4
+)
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_insert_select_all()
+    {
+        $src    = Query::build()->from("table1")
+                                    ->where(["param1", 1], ["param2", Op::GT, 2], ["param3", Op::IN, [1,2,3]])
+                                    ->select("*")
+                                    ;
+        $qry    = Query::build()->insert("table2")->source($src);
+        $expect = <<< EOL
+INSERT INTO `table2`
+SELECT
+    *
+FROM
+    `table1`
+WHERE `param1` = :param1_0
+  AND `param2` > :param2_1
+  AND `param3` IN (:param3_2_0, :param3_2_1, :param3_2_2)
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_insert_select_piece()
+    {
+        $src    = Query::build()->from("table1")
+                                    ->where(["param1", 1], ["param2", Op::GT, 2], ["param3", Op::IN, [1,2,3]])
+                                    ->select("param1, param2, param3")
+                                    ;
+        $qry    = Query::build()->insert("table2")->add(["param1", "param2", "param3"])->source($src);
+        $expect = <<< EOL
+INSERT INTO `table2`(
+    `param1`, `param2`, `param3`
+)
+SELECT
+    `param1`, `param2`, `param3`
+FROM
+    `table1`
+WHERE `param1` = :param1_0
+  AND `param2` > :param2_1
+  AND `param3` IN (:param3_2_0, :param3_2_1, :param3_2_2)
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_update()
+    {
+        $values = [
+            "param1"    => 1,
+            "param2"    => "abc",
+            "param3"    => new DateTime("now")
+        ];
+        $qry    = Query::build()->update("test")->set($values);
+        $expect = <<< EOL
+UPDATE `test`
+SET
+    `param1` = :param1_0, `param2` = :param2_1, `param3` = :param3_2
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_update_with_continual_set()
+    {
+        $values = [
+            "param1"    => 1,
+            "param2"    => "abc",
+            "param3"    => new DateTime("now")
+        ];
+        $qry    = Query::build()->update("test")->set($values)->set(["param4" => "abc", "param5" => 999]);
+        $expect = <<< EOL
+UPDATE `test`
+SET
+    `param1` = :param1_0, `param2` = :param2_1, `param3` = :param3_2, `param4` = :param4_3, `param5` = :param5_4
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_update_with_continual_set_multiple()
+    {
+        $values = [
+            "param1"    => 1,
+            "param2"    => "abc",
+            "param3"    => new DateTime("now")
+        ];
+        $qry    = Query::build()->update("test")->set($values)->set(["param4" => "abc"], ["param5" => 999]);
+        $expect = <<< EOL
+UPDATE `test`
+SET
+    `param1` = :param1_0, `param2` = :param2_1, `param3` = :param3_2, `param4` = :param4_3, `param5` = :param5_4
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_update_specify_table()
+    {
+        $values = [
+            "param1"    => 1,
+            "param2"    => "abc",
+            "param3"    => new DateTime("now")
+        ];
+        $qry    = Query::build()->update()->table("test")->set($values);
+        $expect = <<< EOL
+UPDATE `test`
+SET
+    `param1` = :param1_0, `param2` = :param2_1, `param3` = :param3_2
+
+EOL;
+        $this->assertSame($expect, $qry->toSQL());
+    }
+    
+    public function test_update_with_where()
+    {
+        $values = [
+            "param1"    => 1,
+            "param2"    => "abc",
+            "param3"    => new DateTime("now")
+        ];
+        $qry    = Query::build()->update("test")->set($values)->where(["param1", 5], ["param2", Op::GT]);
+        $expect = <<< EOL
+UPDATE `test`
+SET
+    `param1` = :param1_0, `param2` = :param2_1, `param3` = :param3_2
+WHERE `param1` = :param1_3
+  AND `param2` > :param2_4
 EOL;
         $this->assertSame($expect, $qry->toSQL());
     }

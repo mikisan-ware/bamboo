@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace mikisan\core\basis\bamboo;
 
+use \mikisan\core\util\EX;
 use \mikisan\core\util\STR;
 use \mikisan\core\basis\bamboo\DBUTIL;
 use \mikisan\core\exception\BambooException;
@@ -19,41 +20,47 @@ use \mikisan\core\exception\BambooException;
 class Insert
 {
     
+    private $table  = "";
     private $insert   = [];
 
-    public function __construct()
+    public function __construct(string $table = "")
     {
-        $nums = func_num_args();
-        $args = func_get_args();
-
-        if($nums > 0)
+        if(!EX::empty($table))
         {
-            $this->add_piece(...$args);
+            $this->table    = $table;
         }
-        
         return $this;
     }
     
-    public function __get(string $key): array
+    public function __get(string $key)
     {
         switch(true)
         {
+            case $key === "table":
             case $key === "insert":
                 
-                return $this->insert;
+                return $this->{$key};
         }
         
         throw new BambooException("Insertでは {$key} は取得できません。");
     }
     
-    public function add(array $insert): Insert
+    public function table(string $table): Insert
     {
-        $this->add_piece($insert);
-        
+        $this->table    = $table;
         return $this;
     }
     
-    private function add_piece(array $args) : void
+    public function add(array ...$insert): Insert
+    {
+        foreach($insert as $args)
+        {
+            $this->add_piece($args);
+        }
+        return $this;
+    }
+    
+    private function add_piece(array $args): void
     {
         foreach ($args as $key => $value)
         {
@@ -63,6 +70,10 @@ class Insert
     
     public function toSQL(): string
     {
+        if(EX::empty($this->table))
+        {
+            throw new BambooException("INSERT を行うテーブルが指定されていません。table(テーブル名) で指定してください。");
+        }
         $params = [];
         $values = [];
         $idx    = 0;
@@ -77,10 +88,16 @@ class Insert
     
     public function toSelectSQL(): string
     {
+        if(EX::empty($this->table))
+        {
+            throw new BambooException("INSERT を行うテーブルが指定されていません。table(テーブル名) で指定してください。");
+        }
+        
         if(EX::empty($this->insert))    { return ""; }
         $params = [];
         foreach($this->insert as $key => $value)
         {
+            if(is_int($key))    { $key = $value; }
             $params[]   = DBUTIL::wrapID($key);
         }
         return "(\n" . STR::indent(implode(", ", $params)) . "\n)";
